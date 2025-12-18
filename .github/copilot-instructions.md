@@ -1,22 +1,34 @@
 # Copilot Instructions for slm-ft-serving-frontend
 
-## Repository Context
-**This is the FRONTEND repository** (Stage 3) - a React/Next.js app for medical cancer information extraction. The backend (vLLM + FastAPI gateway) is in a separate repository.
+## Project Context
+This is **Stage 3** of a 4-stage medical LLM serving project. The fine-tuned Llama 3.1 8B model (qLoRA) extracts structured cancer information from clinical text.
+
+| Stage | Status | Description |
+|-------|--------|-------------|
+| 1 | ✅ Complete | vLLM server on EC2 g6.2xlarge |
+| 2 | ✅ Complete | FastAPI gateway (port 8080) |
+| 3 | 🚧 This Repo | Next.js frontend on Vercel |
+| 4 | Future | CloudWatch monitoring |
+
+**Backend repo**: Contains vLLM + FastAPI, see [docs/BACKEND-REPO-INSTRUCTIONS.md](docs/BACKEND-REPO-INSTRUCTIONS.md) for full context.
 
 ## Architecture
 ```
 User Browser → Next.js (Vercel) → FastAPI Gateway (EC2:8080) → vLLM (EC2:8000)
 ```
 
-## Tech Stack Requirements
+## Tech Stack
 - **Framework**: Next.js 14+ with App Router
 - **Language**: TypeScript (strict mode)
-- **Styling**: TailwindCSS
-- **Components**: ShadcnUI preferred
+- **Styling**: TailwindCSS + ShadcnUI components
+- **Package Manager**: npm (not Poetry—this is TypeScript, not Python)
 - **Deployment**: Vercel (auto-deploys from main branch)
 
-## Backend API Integration
-The FastAPI gateway exposes:
+> **Note**: The backend repo uses Poetry/loguru (Python). This frontend uses npm and standard JS logging patterns.
+
+> **Why ShadcnUI?** Copy-paste components built on Radix UI primitives + TailwindCSS. Not a dependency—components live in your codebase (`components/ui/`). Provides accessible, customizable form inputs, buttons, cards ideal for this extraction UI.
+
+## Backend API Contract
 
 ```typescript
 // POST /api/v1/extract
@@ -41,42 +53,60 @@ interface ExtractionResponse {
 // GET /health → {"status":"healthy","vllm_available":true,"version":"0.1.0"}
 ```
 
-## Environment Variables
+## Environment Variables & Secrets
+
+| Variable | Purpose | Exposure |
+|----------|---------|----------|
+| `NEXT_PUBLIC_API_BASE_URL` | Backend gateway URL | Public (client-side) |
+
+**Local Development**: Use `.env.local` (git-ignored)
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://<ec2-ip>:8080  # Backend gateway URL
+NEXT_PUBLIC_API_BASE_URL=http://<ec2-ip>:8080
 ```
 
-## UI/UX Patterns
-1. **Loading states**: API calls take 2-3 seconds - always show loading indicators
-2. **Error handling**: Handle CORS errors, timeouts, and null responses gracefully
-3. **Empty results**: Non-medical text returns all null fields - display appropriate message
-4. **Example texts**: Provide sample clinical texts for demo purposes
-5. **Responsive**: Support both mobile and desktop layouts
+**Production**: Set in Vercel dashboard → Project Settings → Environment Variables
 
-## Key Implementation Notes
-- **No SSR for API calls**: Use client components for extraction calls to avoid exposing backend URL
-- **Consider API route proxy**: Create `/api/extract` route to hide EC2 IP from client
-- **Type safety**: Define TypeScript interfaces matching backend response schema exactly
-- **CORS**: Backend currently allows `*`, will be restricted to Vercel domain post-deploy
+> **Why not AWS Secrets Manager?** This frontend runs on Vercel (not AWS). No direct AWS SDK calls—all AWS resources accessed via the FastAPI gateway. Standard `.env.local` + Vercel env vars is the idiomatic pattern.
+
+## Implementation Patterns
+
+### API Integration
+- Use **Next.js API routes** (`app/api/extract/route.ts`) as proxy to hide EC2 IP from client
+- Client components call `/api/extract`, server route forwards to EC2
+- Define TypeScript interfaces in `types/` matching backend schema exactly
+
+### UI/UX Requirements
+- **Loading states**: LLM inference takes 2-3 seconds—always show spinners
+- **All-null handling**: Non-medical text returns null fields; display "No medical entities found"
+- **Error handling**: CORS errors, timeouts, network failures with user-friendly messages
+- **Responsive**: Mobile-first, works on desktop
+
+### Known Backend Behaviors
+- Non-medical input may produce hallucinated `raw_output` but structured fields return null correctly
+- CORS currently `*`, will be restricted to Vercel domain post-deploy
+- Backend may be stopped (cost savings)—handle connection failures gracefully
 
 ## Cross-Repository Coordination
-When making changes that affect the backend:
-- API schema changes → Update backend gateway first
+- API schema changes → Update backend first, then frontend types
 - CORS issues → Update `config/deployment.yml` in backend repo
-- New endpoints → Coordinate with backend implementation
+- Backend reference: [docs/BACKEND-REPO-INSTRUCTIONS.md](docs/BACKEND-REPO-INSTRUCTIONS.md)
 
 ## Development Workflow
 1. `npm run dev` for local development
-2. Push to main → Vercel auto-deploys
-3. Test against live EC2 backend (ensure instance is running)
-4. Check Vercel logs for deployment issues
+2. Push to `main` → Vercel auto-deploys
+3. Ensure EC2 backend is running before testing extraction
+4. Check Vercel deployment logs for build errors
 
-## File Structure Pattern (when initialized)
+## Project Structure
 ```
 src/
-  app/           # Next.js App Router pages
-  components/    # React components
-    ui/          # ShadcnUI components
-  lib/           # Utilities, API client
-  types/         # TypeScript interfaces
+  app/              # Next.js App Router
+    api/extract/    # API route proxy
+  components/       # React components
+    ui/             # ShadcnUI components
+  lib/              # Utilities, API client
+  types/            # TypeScript interfaces
+docs/
+  BACKEND-REPO-INSTRUCTIONS.md  # Backend context
+  SETUP.md                      # Project setup guide (TBD)
 ```
