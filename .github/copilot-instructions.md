@@ -10,7 +10,7 @@ This is **Stage 3** of a 4-stage medical LLM serving project. The fine-tuned Lla
 | 3 | 🚧 This Repo | Next.js frontend on Vercel |
 | 4 | Future | CloudWatch monitoring |
 
-**Backend repo**: Contains vLLM + FastAPI, see [docs/BACKEND-REPO-INSTRUCTIONS.md](docs/BACKEND-REPO-INSTRUCTIONS.md) for full context.
+**Backend repo**: Contains vLLM + FastAPI, see [docs/BACKEND-REPO-INSTRUCTIONS.md](../docs/BACKEND-REPO-INSTRUCTIONS.md) for full context.
 
 ## Architecture
 ```
@@ -89,7 +89,7 @@ NEXT_PUBLIC_API_BASE_URL=http://<ec2-ip>:8080
 ## Cross-Repository Coordination
 - API schema changes → Update backend first, then frontend types
 - CORS issues → Update `config/deployment.yml` in backend repo
-- Backend reference: [docs/BACKEND-REPO-INSTRUCTIONS.md](docs/BACKEND-REPO-INSTRUCTIONS.md)
+- Backend reference: [docs/BACKEND-REPO-INSTRUCTIONS.md](../docs/BACKEND-REPO-INSTRUCTIONS.md)
 
 ## Development Workflow
 1. `npm run dev` for local development
