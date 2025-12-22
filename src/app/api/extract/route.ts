@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BACKEND_URL = process.env.BACKEND_API_URL;
 
 export async function POST(request: NextRequest) {
   try {
