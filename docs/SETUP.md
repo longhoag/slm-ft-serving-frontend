@@ -85,10 +85,18 @@ Add the following content:
 
 ```env
 # Backend API URL (FastAPI gateway on EC2)
-NEXT_PUBLIC_API_BASE_URL=http://<ec2-public-ip>:8080
+# Server-only variable - used by API routes, never exposed to browser
+BACKEND_API_URL=http://<ec2-public-ip>:8080
+
+# Optional: Only needed if calling backend directly from client (lib/api.ts)
+# NEXT_PUBLIC_API_BASE_URL=http://<ec2-public-ip>:8080
 ```
 
 Replace `<ec2-public-ip>` with your actual EC2 instance public IP.
+
+> **Why two variables?**
+> - `BACKEND_API_URL` (server-only): Used by API routes (`route.ts`), completely hidden from browser, no redeploy needed when changed
+> - `NEXT_PUBLIC_API_BASE_URL` (public): Only needed if using `lib/api.ts` to call backend directly from browser
 
 Create `.env.example` as a template for other developers:
 
@@ -99,7 +107,12 @@ touch .env.example
 ```env
 # Backend API URL (FastAPI gateway on EC2)
 # Copy this file to .env.local and fill in values
-NEXT_PUBLIC_API_BASE_URL=http://your-ec2-ip:8080
+
+# Server-only variable (used by API routes, never exposed to browser)
+BACKEND_API_URL=http://your-ec2-ip:8080
+
+# Public variable (optional - only needed if calling backend directly from client)
+# NEXT_PUBLIC_API_BASE_URL=http://your-ec2-ip:8080
 ```
 
 ---
@@ -206,7 +219,7 @@ Create `src/app/api/extract/route.ts`:
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BACKEND_URL = process.env.BACKEND_API_URL;
 
 export async function POST(request: NextRequest) {
   try {
@@ -243,7 +256,7 @@ Create `src/app/api/health/route.ts`:
 
 import { NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BACKEND_URL = process.env.BACKEND_API_URL;
 
 export async function GET() {
   try {
@@ -493,7 +506,9 @@ Before deploying, add environment variables:
 
 | Name | Value | Environment |
 |------|-------|-------------|
-| `NEXT_PUBLIC_API_BASE_URL` | `http://<ec2-public-ip>:8080` | Production, Preview, Development |
+| `BACKEND_API_URL` | `http://<ec2-public-ip>:8080` | Production, Preview, Development |
+
+> **Important:** Use `BACKEND_API_URL` (server-only) for production. This keeps your EC2 IP completely hidden from the browser and allows changing it without redeploying.
 
 3. Click **"Add"** for each variable
 
