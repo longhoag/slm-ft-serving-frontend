@@ -549,6 +549,51 @@ Redeploy the backend for CORS changes to take effect.
 3. Enter your custom domain
 4. Follow DNS configuration instructions
 
+### 10.3 Update Backend IP Address (When EC2 IP Changes)
+
+If your EC2 instance's public IP address changes (e.g., instance stopped/restarted, redeployment), update the environment variable on Vercel:
+
+**Method 1: Via Vercel Dashboard (Recommended)**
+
+1. Go to https://vercel.com/dashboard
+2. Select your project **"medical-extraction"**
+3. Navigate to **Settings** → **Environment Variables**
+4. Find `BACKEND_API_URL`
+5. Click the **three dots (⋯)** → **Edit**
+6. Update the value to the new EC2 IP: `http://<new-ec2-ip>:8080`
+7. Click **Save**
+
+> **Important:** Because `BACKEND_API_URL` is a server-only variable (no `NEXT_PUBLIC_` prefix), changes take effect immediately without redeploying. The next API request will use the new IP.
+
+**Method 2: Via Vercel CLI (Optional)**
+
+```bash
+# Install Vercel CLI (if not already installed)
+npm i -g vercel
+
+# Login
+vercel login
+
+# Update environment variable
+vercel env rm BACKEND_API_URL production
+vercel env add BACKEND_API_URL production
+# When prompted, enter: http://<new-ec2-ip>:8080
+```
+
+**Verification:**
+
+1. Visit `https://medical-extraction.vercel.app`
+2. Test the extraction form with sample clinical text
+3. Check that requests succeed (no connection errors)
+4. Optionally, check `/api/health` endpoint responds correctly
+
+**Alternative: Use Elastic IP (Backend Best Practice)**
+
+To avoid manual updates, consider assigning an **Elastic IP** to your EC2 instance in the backend setup:
+- Elastic IPs remain constant even when instance stops/restarts
+- Set it once in Vercel, never update again
+- Small additional AWS cost (~$0.005/hour when instance running)
+
 ---
 
 ## Development Commands Reference
