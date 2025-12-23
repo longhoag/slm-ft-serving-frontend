@@ -516,7 +516,7 @@ Before deploying, add environment variables:
 
 1. Click **"Deploy"**
 2. Wait for build to complete (usually 1-2 minutes)
-3. Once deployed, you'll get a URL like `https://slm-ft-serving-frontend.vercel.app`
+3. Once deployed, you'll get a URL like `https://medical-extraction.vercel.app` (custom project name change for cleaner address than the repo name: `slm-ft-serving-frontend`)
 
 ### 9.6 Verify Deployment
 
@@ -536,7 +536,7 @@ In the **backend repository**, update `config/deployment.yml`:
 
 ```yaml
 cors_origins:
-  - "https://slm-ft-serving-frontend.vercel.app"
+  - "https://medical-extraction.vercel.app"
   - "https://*.vercel.app"  # For preview deployments
 ```
 
