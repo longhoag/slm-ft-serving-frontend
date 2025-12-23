@@ -10,14 +10,7 @@ A Next.js web application for extracting structured cancer information from clin
 
 ## Overview
 
-This is **Stage 3** of a 4-stage medical LLM serving project. The system uses a fine-tuned Llama 3.1 8B model (qLoRA 4-bit quantization) to extract structured medical entities from clinical text.
-
-| Stage | Status | Description | Repository |
-|-------|--------|-------------|------------|
-| 1 | ✅ Complete | vLLM inference server on EC2 g6.2xlarge | Backend repo |
-| 2 | ✅ Complete | FastAPI gateway (port 8080) | Backend repo |
-| 3 | ✅ Complete | **Next.js frontend on Vercel** | **This repo** |
-| 4 | 🔮 Future | CloudWatch monitoring & observability | TBD |
+This is the **frontend interface** to serve a fine-tuned Llama 3.1 8B model for medical information extraction. Built with Next.js and deployed on Vercel, it provides a user-friendly web interface to extract structured cancer information from clinical text using AI-powered analysis.
 
 ### What It Extracts
 
@@ -158,6 +151,19 @@ Want to run this locally or contribute? See [docs/SETUP.md](docs/SETUP.md) for:
 - Environment configuration
 - Deployment instructions
 - Troubleshooting guide
+
+### Project Context
+
+This is **Stage 3** of a 4-stage medical LLM serving project:
+
+| Stage | Status | Description | Repository |
+|-------|--------|-------------|------------|
+| 1 | ✅ Complete | vLLM inference server on EC2 g6.2xlarge | Backend repo |
+| 2 | ✅ Complete | FastAPI gateway (port 8080) | Backend repo |
+| 3 | ✅ Complete | **Next.js frontend on Vercel** | **This repo** |
+| 4 | 🔮 Future | CloudWatch monitoring & observability | TBD |
+
+The system uses a fine-tuned Llama 3.1 8B model (qLoRA 4-bit quantization) for structured medical entity extraction from clinical text.
 
 ---
 
