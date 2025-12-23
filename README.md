@@ -2,7 +2,9 @@
 
 A Next.js web application for extracting structured cancer information from clinical text using AI-powered analysis.
 
-🔗 **Live Demo:** [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
+**🌐 Live Demo:** [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
+
+![ Medical Information Extraction Site Preview](https://img.shields.io/badge/Status-Live-brightgreen) ![Next.js](https://img.shields.io/badge/Next.js-16.x-black)
 
 ---
 
