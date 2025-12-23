@@ -1,64 +1,236 @@
-# slm-ft-serving-frontend
+# Medical Information Extraction Frontend
 
-I have done a project that fine tunes the llama 3.1 8B model using 4-bit quantization qLoRA technique for medical cancer-specific information extraction (IE) on EC2 instance. Then I pushed the adapter after fine-tuning to my model repo on Hugging Face which consists of these files: .gitattributes, README.md, adapter_config.json, adapter_model.safetensors, special_tokens_map.json, tokenizer.json, tokenizer_config.json, training_args.bin
+A Next.js web application for extracting structured cancer information from clinical text using AI-powered analysis.
 
-This project is to serve that fine-tuned llama 3.1 8B model using vLLM with a focus of optmization technique with vLLM, and this repo is for building the frontend of this serving project which is stage 3 of the project that is documented below.
+🔗 **Live Demo:** [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
 
-To let you better understand the fine-tuned model, I trained with the synthetic data with one entry of the training data as follows:  {"instruction": "Extract all cancer-related entities from the text.", "input": "70-year-old man with widely metastatic cutaneous melanoma. PD-L1 was 5% on IHC and NGS reported TMB-high; BRAF testing was not performed prior to treatment. Given multiple symptomatic brain metastases he received combination immunotherapy with nivolumab plus ipilimumab and stereotactic radiosurgery to dominant intracranial lesions. Imaging after two cycles demonstrated some shrinking of index lesions but appearance of a new small lesion \u2014 overall assessment called a mixed response.", "output": {"cancer_type": "melanoma (cutaneous)", "stage": "IV", "gene_mutation": null, "biomarker": "PD-L1 5%; TMB-high", "treatment": "nivolumab and ipilimumab; stereotactic radiosurgery", "response": "mixed response", "metastasis_site": "brain"}}
+---
 
-My current planning of this project will be split into 4 different stages. We need to complete each stage first then move to the next. One stage requires a different repo for better organization of frontend and backend.  I just plan ahead so that you can get a better picture of the project, avoiding unorganized architecture when we build more layer into the system. 
+## Overview
 
-Stage 1: Deploy EC2 instance for the vLLM server.
-- The choice of the instance is g6.2xlarge (us-east-1)
-- EBS root volume of 50 Gib or 100 Gib (suggest a storage size: efficient and cost-saving?)
+This is **Stage 3** of a 4-stage medical LLM serving project. The system uses a fine-tuned Llama 3.1 8B model (qLoRA 4-bit quantization) to extract structured medical entities from clinical text.
 
-Planned CI/CD pipeline for stage 1:
-- Github actions (fully automated): build docker image and push to ECR
-- Setup scripts (execute from local terminal): 
-1. Start EC2 instance
-1.1 Wait for status ok
-2. Send SSM run command to deploy
+| Stage | Status | Description | Repository |
+|-------|--------|-------------|------------|
+| 1 | ✅ Complete | vLLM inference server on EC2 g6.2xlarge | Backend repo |
+| 2 | ✅ Complete | FastAPI gateway (port 8080) | Backend repo |
+| 3 | ✅ Complete | **Next.js frontend on Vercel** | **This repo** |
+| 4 | 🔮 Future | CloudWatch monitoring & observability | TBD |
 
-Note on serving model in this stage: The base model is on Hugging Face with this path: meta-llama/Llama-3.1-8B; and my fine-tuned adapter is under my repo with path: loghoag/llama-3.1-8b-medical-ie; So that you know when loading the model we would have to load the base model and the adapters I trained.
+### What It Extracts
 
-Stage 2: Add lightweight Backend Gateway FastAPI
-Planned CI/CD pipeline for stage 2:
-- Github actions build 2 docker images and push to ECR (vLLM + API gateway)
-- Deploy on EC2 from SSM run command sent from local like we did in stage 1
+Given clinical text, the model extracts 7 structured fields:
 
-+ Dependencies: API gateway waits until vLLM is healthy 
-We can add tests: 
-- linting
-- API tests
-- vLLM connectivity test
+| Field | Description |
+|-------|-------------|
+| Cancer Type | e.g., melanoma, breast cancer, NSCLC |
+| Stage | e.g., III, IV, metastatic |
+| Gene Mutation | e.g., EGFR exon 19, KRAS G12D, BRCA1 |
+| Biomarker | e.g., HER2+, PD-L1 5%, TMB-high |
+| Treatment | e.g., nivolumab, chemotherapy, surgery |
+| Response | e.g., complete response, stable disease |
+| Metastasis Site | e.g., brain, liver, bone |
 
-Note: We add this layer on the same EC2 instance as vLLM server.
+---
 
-Stage 3: Add front end using React + Next.js on Vercel. We will have this front end on a seperate git repo, but you would get the idea that we would want to have an UI for this model serving.
+## Architecture
 
-Route53 DNS --> AWS ALB --> EC2 instance 
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│   User Browser   │────▶│   Vercel Edge    │────▶│   EC2 Backend    │
+│                  │     │   (Next.js)      │     │                  │
+│  React Frontend  │◀────│   API Routes     │◀────│  FastAPI + vLLM  │
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+                              /api/extract            :8080/api/v1/extract
+```
 
-Planned CI/CD pipeline:
-- Push front end --> Vercel auto builds and deploys
+**Data Flow:**
+1. User enters clinical text in the web form
+2. Frontend calls `/api/extract` (Next.js API route)
+3. API route proxies request to EC2 FastAPI gateway
+4. FastAPI forwards to vLLM for inference (~2-3 seconds)
+5. Structured JSON response displayed in UI
 
-Stage 4: Add monitoring and observability to monitor LLM inference
-We can add: 
-- CloudWatch GPU metrics
-- Logs for vLLM container
-- Dashboarding  
+---
 
+## Tech Stack
 
-Project Overall Note: 
-- I would like to send command from the local terminal and run everything remotely on EC2 via AWS SSM (no need to connect to EC2 instance via SSH or the need of .pem key). With a lot of setup and moving parts, I would want the command to be execute with precaution to errors, enable failsafe measures, etc.
-- With different stages, the file architecture can add up, but when implementing the stage 1, don't create the architecture for stage 2 or 4. We will gradually add them up so that we can make sure there are no errors or disorganization downstream. 
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript (strict mode) |
+| Styling | TailwindCSS v4 |
+| UI Components | ShadcnUI (Radix primitives) |
+| Deployment | Vercel (auto-deploy from main) |
+| Backend | FastAPI + vLLM (separate repo) |
 
-- Keys need to be set up (there may be more than this, please suggest all the keys needed for set up but for follow in each stage): 
-+ HF access token: to retrieve llama model
-+ AWS access key + secret access key 
-+ ECR
+---
 
-Requirements:
-- use AWS secrets manager to store keys, access tokens, etc. then use SSM parameter store to reference the key --> SSM and secrets manager integration for ease-of-use and privacy. Not using regular .env file because we would run command remotely on EC2 instance
-- Use CloudWatch to log output and session from SSM run command
-- use poetry for dependencies management (if needed for local script execution)
-- use loguru logger instead of printing statements (if needed for local script execution)
+## Features
+
+✨ **Real-time Extraction** - Extract medical entities in 2-3 seconds  
+🔒 **Secure Architecture** - EC2 backend IP hidden via server-side proxy  
+📱 **Responsive Design** - Works seamlessly on mobile and desktop  
+🎯 **Type-safe** - Full TypeScript coverage with strict mode  
+⚡ **Fast & Modern** - Built with Next.js 16 and TailwindCSS v4  
+🔄 **Auto-deploy** - Push to main → live on Vercel instantly
+
+---
+
+## How It Works
+
+1. **Enter Clinical Text** - Paste any cancer-related medical notes
+2. **AI Processing** - Fine-tuned Llama 3.1 8B analyzes the text
+3. **Structured Output** - Get 7 organized fields in seconds
+4. **Review Results** - Cancer type, stage, mutations, treatments, and more
+
+---
+
+## Example Usage
+
+**Input:**
+```
+Patient diagnosed with stage 3 breast cancer with HER2 positive marker. 
+Underwent mastectomy followed by adjuvant chemotherapy with trastuzumab 
+and pertuzumab. Post-treatment scans show complete response.
+```
+
+**Output:**
+- **Cancer Type:** Breast cancer
+- **Stage:** 3
+- **Biomarker:** HER2 positive
+- **Treatment:** Mastectomy; trastuzumab and pertuzumab
+- **Response:** Complete response
+- _(Other fields: null if not mentioned)_
+
+Try it yourself: [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript (strict mode) |
+| Styling | TailwindCSS v4 |
+| UI Components | ShadcnUI (Radix primitives) |
+| Deployment | Vercel (auto-deploy from main) |
+| Backend | FastAPI + vLLM (separate repo) |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── extract/route.ts   # Proxy to backend /api/v1/extract
+│   │   └── health/route.ts    # Proxy to backend /health
+│   ├── layout.tsx             # Root layout with metadata
+│   └── page.tsx               # Main extraction form page
+├── components/
+│   ├── ui/                    # ShadcnUI components
+│   ├── extraction-form.tsx    # Clinical text input form
+│   └── extraction-results.tsx # Results display grid
+├── lib/
+│   ├── api.ts                 # API client functions
+│   └── utils.ts               # Utility functions
+└── types/
+    ├── api.ts                 # TypeScript interfaces
+    └── index.ts               # Barrel exports
+
+docs/
+├── SETUP.md                   # Detailed setup guide
+├── EXAMPLES.md                # Sample clinical texts for testing
+└── BACKEND-REPO-INSTRUCTIONS.md  # Backend context
+```
+
+---
+
+## For Developers
+
+Want to run this locally or contribute? See [docs/SETUP.md](docs/SETUP.md) for:
+- Local development setup
+- Environment configuration
+- Deployment instructions
+- Troubleshooting guide
+
+---
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `BACKEND_API_URL` | FastAPI gateway URL (server-only) | ✅ Yes |
+
+> **Note:** `BACKEND_API_URL` is a server-only variable (no `NEXT_PUBLIC_` prefix), meaning it's never exposed to the browser and can be changed in Vercel without redeploying.
+
+---
+
+## Deployment
+
+This project is deployed on Vercel with auto-deployment from the `main` branch.
+
+**Deployed URL:** [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
+
+For deployment details, see [docs/SETUP.md](docs/SETUP.md).
+
+---
+
+## API Endpoints
+
+### Frontend Routes
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Main extraction form |
+| `/api/extract` | POST | Proxy to backend extraction |
+| `/api/health` | GET | Proxy to backend health check |
+
+### Backend API (proxied)
+
+```typescript
+// POST /api/extract
+{
+  "text": "Clinical text here...",
+  "temperature": 0.3,    // optional
+  "max_tokens": 512      // optional
+}
+
+// Response
+{
+  "cancer_type": "melanoma",
+  "stage": "IV",
+  "gene_mutation": null,
+  "biomarker": "PD-L1 5%",
+  "treatment": "nivolumab",
+  "response": "partial response",
+  "metastasis_site": "brain",
+  "raw_output": "...",
+  "tokens_used": 116
+}
+```
+
+---
+
+## Documentation
+
+- [Setup Guide](docs/SETUP.md) - Complete installation and deployment steps
+- [Clinical Examples](docs/EXAMPLES.md) - Sample texts for testing
+- [Backend Instructions](docs/BACKEND-REPO-INSTRUCTIONS.md) - Backend repo context
+
+---
+
+## Related Projects
+
+- **Backend Repository** - [vLLM server + FastAPI gateway (Stage 1 & 2)](https://github.com/longhoag/slm-ft-serving) 
+- **Fine-tuned Model** - [loghoag/llama-3.1-8b-medical-ie](https://huggingface.co/loghoag/llama-3.1-8b-medical-ie)
+- **Base Model** - [meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B)
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.

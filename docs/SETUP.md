@@ -616,7 +616,7 @@ To avoid manual updates, consider assigning an **Elastic IP** to your EC2 instan
 
 ### Connection Timeout
 - Verify EC2 instance is running
-- Check `NEXT_PUBLIC_API_BASE_URL` is correct
+- Check `BACKEND_API_URL` is correct
 - Test backend directly: `curl http://<ec2-ip>:8080/health`
 
 ### Build Failures on Vercel
