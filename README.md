@@ -113,7 +113,7 @@ Try it yourself: [https://medical-extraction.vercel.app](https://medical-extract
 
 ### Edge Case: Non-Medical Text
 ![Non-Medical Text Edge Case](public/example3-edge-case.png)
-*When non-medical text is provided, the system correctly returns null for all fields.*
+*When non-medical text is provided, the system correctly returns flagged message.*
 
 ---
 
