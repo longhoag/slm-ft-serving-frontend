@@ -4,6 +4,8 @@ A Next.js web application for extracting structured cancer information from clin
 
 **🌐 Live Demo:** [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
 
+> **Note:** The frontend is always live, but the backend EC2 server may not be running at all times to save costs (this is an experimental project). If you encounter connection errors, please reach out.
+
 ![ Medical Information Extraction Site Preview](https://img.shields.io/badge/Status-Live-brightgreen) ![Next.js](https://img.shields.io/badge/Next.js-16.x-black)
 
 ---
@@ -30,19 +32,22 @@ Given clinical text, the model extracts 7 structured fields:
 
 ## Architecture
 
-```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│   User Browser   │────▶│   Vercel Edge    │────▶│   EC2 Backend    │
-│                  │     │   (Next.js)      │     │                  │
-│  React Frontend  │◀────│   API Routes     │◀────│  FastAPI + vLLM  │
-└──────────────────┘     └──────────────────┘     └──────────────────┘
-                              /api/extract            :8080/api/v1/extract
+```mermaid
+graph LR
+    A[User Browser<br/>React Frontend] -->|HTTPS| B[Vercel Edge<br/>Next.js API Routes]
+    B -->|HTTP| C[EC2 Backend<br/>FastAPI + vLLM]
+    C -->|JSON Response| B
+    B -->|JSON Response| A
+    
+    style A fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style B fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style C fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```
 
 **Data Flow:**
 1. User enters clinical text in the web form
 2. Frontend calls `/api/extract` (Next.js API route)
-3. API route proxies request to EC2 FastAPI gateway
+3. API route proxies request to EC2 FastAPI gateway (port 8080)
 4. FastAPI forwards to vLLM for inference (~2-3 seconds)
 5. Structured JSON response displayed in UI
 
@@ -99,6 +104,20 @@ and pertuzumab. Post-treatment scans show complete response.
 - _(Other fields: null if not mentioned)_
 
 Try it yourself: [https://medical-extraction.vercel.app](https://medical-extraction.vercel.app)
+
+---
+
+## Visual Showcase
+
+### Example 1: Melanoma with Brain Metastases
+![Melanoma Extraction Example](public/example1.png)
+
+### Example 2: Breast Cancer Extraction
+![Breast Cancer Extraction Example](public/example2.png)
+
+### Edge Case: Non-Medical Text
+![Non-Medical Text Edge Case](public/example3-edge-case.png)
+*When non-medical text is provided, the system correctly returns null for all fields.*
 
 ---
 
