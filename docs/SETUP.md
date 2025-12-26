@@ -609,6 +609,22 @@ To avoid manual updates, consider assigning an **Elastic IP** to your EC2 instan
 
 ## Troubleshooting
 
+### Port Being Stripped from Backend URL
+
+**Symptom:** Frontend calls `http://3.86.187.62` instead of `http://3.86.187.62:8080`
+
+**Cause:** `BACKEND_API_URL` environment variable not set in Vercel
+
+**Solution:**
+1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+2. Verify `BACKEND_API_URL` is set to `http://<ec2-ip>:8080` (with the `:8080` port)
+3. Check all environments (Production, Preview, Development)
+4. Redeploy if needed (or wait - server-only variables don't require redeploy)
+
+**Verify:**
+- Check Vercel deployment logs for `[API Route] BACKEND_API_URL:` to see what value is being used
+- Error message "Backend configuration error: BACKEND_API_URL not set" means variable is missing
+
 ### CORS Errors
 - Check browser console for CORS messages
 - Verify backend CORS config includes Vercel domain
@@ -616,7 +632,7 @@ To avoid manual updates, consider assigning an **Elastic IP** to your EC2 instan
 
 ### Connection Timeout
 - Verify EC2 instance is running
-- Check `BACKEND_API_URL` is correct
+- Check `BACKEND_API_URL` includes port: `http://<ec2-ip>:8080`
 - Test backend directly: `curl http://<ec2-ip>:8080/health`
 
 ### Build Failures on Vercel
