@@ -12,7 +12,7 @@ A Next.js web application for extracting structured cancer information from clin
 
 ## Overview
 
-This is the **frontend interface** to serve a fine-tuned Llama 3.1 8B model for medical information extraction. Built with Next.js and deployed on Vercel, it provides a user-friendly web interface to extract structured cancer information from clinical text using AI-powered analysis.
+This is the **frontend interface** to serve a fine-tuned Llama 3.1 8B model for medical information extraction. Built with Next.js and deployed on Vercel, it provides a user-friendly web interface to extract structured cancer information from clinical text using LLM-powered analysis.
 
 ### What It Extracts
 
